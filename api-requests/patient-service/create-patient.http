@@ -3,9 +3,9 @@ POST http://localhost:4000/patients
 Content-Type: application/json
 
 {
-  "name": "John Doe Smith",
+  "name": "John Doe Kafka Test 2",
   "address": "123 Main St, Springfield, USA",
-  "email": "test_kafka@example.com",
+  "email": "test_kafka2@example.com",
   "birthDate": "1995-01-01",
   "registrationDate": "2024-10-01"
 }

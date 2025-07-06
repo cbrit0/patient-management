@@ -1,12 +1,13 @@
 package com.cbrit0.stack;
 
 import software.amazon.awscdk.*;
-import software.amazon.awscdk.services.ec2.InstanceClass;
-import software.amazon.awscdk.services.ec2.InstanceSize;
+import software.amazon.awscdk.services.ec2.*;
 import software.amazon.awscdk.services.ec2.InstanceType;
-import software.amazon.awscdk.services.ec2.Vpc;
+import software.amazon.awscdk.services.msk.CfnCluster;
 import software.amazon.awscdk.services.rds.*;
 import software.amazon.awscdk.services.route53.CfnHealthCheck;
+
+import java.util.stream.Collectors;
 
 public class LocalStack extends Stack {
     private final Vpc vpc;
@@ -21,6 +22,8 @@ public class LocalStack extends Stack {
 
         CfnHealthCheck authDbHealthCheck = createDbHealthCheck(authServiceDb, "AuthServiceDbHealthCheck");
         CfnHealthCheck patientDbHealthCheck = createDbHealthCheck(patientServiceDb, "PatientServiceDbHealthCheck");
+
+        CfnCluster kafkaCluster = createKafkaCluster();
     }
 
     private Vpc createVpc() {
@@ -50,6 +53,20 @@ public class LocalStack extends Stack {
                         .ipAddress(dbInstance.getDbInstanceEndpointAddress())
                         .requestInterval(30)
                         .failureThreshold(3)
+                        .build())
+                .build();
+    }
+
+    private CfnCluster createKafkaCluster() {
+        return CfnCluster.Builder.create(this, "MskCluster")
+                .clusterName("kafka-cluster")
+                .kafkaVersion("2.8.0")
+                .numberOfBrokerNodes(1)
+                .brokerNodeGroupInfo(CfnCluster.BrokerNodeGroupInfoProperty.builder()
+                        .instanceType("kafka.m5.xlarge")
+                        .clientSubnets(vpc.getPrivateSubnets().stream()
+                                .map(ISubnet::getSubnetId).collect(Collectors.toList()))
+                        .brokerAzDistribution("DEFAULT")
                         .build())
                 .build();
     }
